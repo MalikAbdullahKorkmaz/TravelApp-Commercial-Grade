@@ -4,6 +4,7 @@ import { View, Text, Image, StyleSheet, ScrollView, SafeAreaView } from 'react-n
 import { useI18n } from '../src/context/Localization';
 import { db } from '../src/services/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { fetchHotels } from '../src/services/bookingApi';
 import { ActivityIndicator, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -21,11 +22,17 @@ export default function DetailsScreen({ route, navigation }) {
         return;
       }
       try {
-        // Fetch Hotels
-        const hotelsQuery = query(collection(db, 'hotels'), where('destinationId', '==', destination.id));
-        const hotelsSnapshot = await getDocs(hotelsQuery);
-        const hotelsData = hotelsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setHotels(hotelsData);
+        // Fetch Hotels from Booking.com API
+        const apiHotels = await fetchHotels(destination.title);
+        setHotels(apiHotels);
+
+        // Fallback to Firebase mock data if API fails or returns empty
+        if (apiHotels.length === 0) {
+          const hotelsQuery = query(collection(db, 'hotels'), where('destinationId', '==', destination.id));
+          const hotelsSnapshot = await getDocs(hotelsQuery);
+          const hotelsData = hotelsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setHotels(hotelsData);
+        }
 
         // Fetch Cars (assuming cars are general and not destination-specific for simplicity)
         const carsQuery = query(collection(db, 'cars'));
@@ -80,12 +87,12 @@ export default function DetailsScreen({ route, navigation }) {
               <Image source={{ uri: hotel.imageUrl }} style={styles.hotelImage} />
               <View style={styles.cardContent}>
                 <Text style={styles.hotelName}>{hotel.name}</Text>
-                <Text style={styles.hotelPrice}>${hotel.price} / night</Text>
+	                <Text style={styles.hotelPrice}>${hotel.price ? hotel.price.toFixed(2) : 'N/A'} / night</Text>
                 <View style={styles.ratingContainer}>
                   <MaterialCommunityIcons name="star" size={16} color="#f39c12" />
                   <Text style={styles.hotelRating}>{hotel.rating}</Text>
                 </View>
-                <Text style={styles.hotelFeatures}>{hotel.features.join(' • ')}</Text>
+	              <Text style={styles.hotelFeatures}>{hotel.address || 'Address not available'}</Text>
                 <TouchableOpacity style={styles.selectButton} onPress={() => handleHotelSelect(hotel)}>
                   <Text style={styles.selectButtonText}>Select Hotel</Text>
                 </TouchableOpacity>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,21 @@ import {
   Dimensions,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { fetchUnsplashImage } from '../src/services/unsplash';
 
 const { width } = Dimensions.get('window');
 
 const DestinationCard = ({ destination, onPress, onFavoritePress }) => {
   const [isFavorite, setIsFavorite] = useState(false);
+  const [imageUrl, setImageUrl] = useState(destination.image); // Use existing image as fallback
+
+  useEffect(() => {
+    const loadImage = async () => {
+      const url = await fetchUnsplashImage(destination.title + ' city');
+      setImageUrl(url);
+    };
+    loadImage();
+  }, [destination.title]);
 
   const handleFavoritePress = () => {
     setIsFavorite(!isFavorite);
@@ -29,7 +39,7 @@ const DestinationCard = ({ destination, onPress, onFavoritePress }) => {
     >
       <View style={styles.imageContainer}>
         <Image
-          source={{ uri: destination.image }}
+          source={{ uri: imageUrl }}
           style={styles.image}
           resizeMode="cover"
         />
