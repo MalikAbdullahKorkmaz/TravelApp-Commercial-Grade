@@ -64,7 +64,7 @@ export default function ProfileScreen({ navigation }) {
   const handleLogout = async () => {
     try {
       await auth.signOut();
-      navigation.navigate('Login'); // Navigate back to the login screen
+      navigation.navigate('Login'); // Navigate back to the login screen (handled by RootNavigator) (handled by RootNavigator)
     } catch (error) {
       console.error("Logout error:", error);
       alert("Logout failed. Please try again.");
@@ -98,9 +98,10 @@ export default function ProfileScreen({ navigation }) {
 
 	        {/* User Info Section */}
 	        <View style={styles.userInfoContainer}>
-	          <MaterialCommunityIcons name="account-circle" size={60} color="#FF6B6B" />
-	          <Text style={styles.userName}>{user.email}</Text>
-	          <Text style={styles.userSince}>Member since: {new Date(user.metadata.creationTime).toLocaleDateString()}</Text>
+          <MaterialCommunityIcons name="account-circle" size={60} color="#FF6B6B" />
+          <Text style={styles.userName}>{user.displayName || 'Traveler'}</Text>
+          <Text style={styles.userEmail}>{user.email}</Text>
+		          <Text style={styles.userSince}>Member since: {new Date(user.metadata.creationTime).toLocaleDateString()}</Text>
 	        </View>
 
 	        {/* Bookings Section */}
@@ -118,7 +119,15 @@ export default function ProfileScreen({ navigation }) {
 	          <Text style={styles.noDataText}>No active bookings found.</Text>
 	        )}
 
-	        {/* Favorites Section */}
+		        {/* Settings Link */}
+		        <Text style={styles.sectionTitle}>Settings</Text>
+		        <TouchableOpacity style={styles.settingLink} onPress={() => navigation.navigate('Settings')}>
+		          <MaterialCommunityIcons name="cog" size={24} color="#333" />
+		          <Text style={styles.settingLinkText}>App Settings</Text>
+		          <MaterialCommunityIcons name="chevron-right" size={24} color="#ccc" />
+		        </TouchableOpacity>
+
+		        {/* Favorites Section */}
 	        <Text style={styles.sectionTitle}>My Favorites ({favorites.length})</Text>
 	        {favorites.length > 0 ? (
 	          favorites.map((fav, index) => (
@@ -199,6 +208,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
     color: '#333',
   },
+  userEmail: {
+    fontSize: 16,
+    color: '#999',
+    marginTop: 4,
+  },
   userSince: {
     fontSize: 14,
     color: '#999',
@@ -268,9 +282,23 @@ const styles = StyleSheet.create({
     marginTop: 30,
     alignItems: 'center',
   },
-  logoutButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  }
-});
+	  logoutButtonText: {
+	    color: '#fff',
+	    fontSize: 16,
+	    fontWeight: '700',
+	  },
+	  settingLink: {
+	    flexDirection: 'row',
+	    alignItems: 'center',
+	    justifyContent: 'space-between',
+	    paddingVertical: 15,
+	    borderBottomWidth: 1,
+	    borderBottomColor: '#eee',
+	  },
+	  settingLinkText: {
+	    flex: 1,
+	    fontSize: 16,
+	    marginLeft: 15,
+	    color: '#333',
+	  }
+	});

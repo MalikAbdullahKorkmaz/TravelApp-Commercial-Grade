@@ -1,28 +1,22 @@
-
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../src/services/firebase';
 import DestinationCard from '../components/DestinationCard';
 import { useI18n } from '../src/context/Localization';
+import { destinations } from '../seedDestinations'; // Import local data
 
 export default function HomeScreen({ navigation }) {
-  const [destinations, setDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
   const { t } = useI18n();
 
+  // Simulate data loading for a better user experience
   useEffect(() => {
-    (async () => {
-      try {
-        const snap = await getDocs(collection(db, 'destinations'));
-        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        setDestinations(data);
-      } catch (e) {
-        console.error('Firestore error', e);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    // In a real app, this would be fetching from a remote API.
+    // Since we are using local data, we simulate the loading state.
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500); // Simulate a short network delay
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handlePress = (destination) => navigation.navigate('Details', { destination });
@@ -40,8 +34,8 @@ export default function HomeScreen({ navigation }) {
           </View>
         ) : (
           <View style={{ gap: 12 }}>
-            {destinations.map((d) => (
-              <DestinationCard key={d.id} destination={d} onPress={handlePress} />
+            {destinations.map((d, index) => (
+              <DestinationCard key={index} destination={d} onPress={handlePress} />
             ))}
           </View>
         )}

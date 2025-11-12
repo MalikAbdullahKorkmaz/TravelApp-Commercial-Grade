@@ -1,52 +1,56 @@
-
-import React from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useI18n } from '../src/context/Localization';
+import { getDestinationId, getHotelsByDestination } from '../src/services/travelApi';
+import HotelMap from '../components/HotelMap';
+import { mockCarData } from '../seedDestinations'; // Mock car data
 import { db } from '../src/services/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { fetchHotels } from '../src/services/bookingApi';
-import { ActivityIndicator, TouchableOpacity } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function DetailsScreen({ route, navigation }) {
   const { destination } = route.params || {};
-  const [hotels, setHotels] = React.useState([]);
-  const [cars, setCars] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
+  const [hotels, setHotels] = useState([]);
+  const [cars, setCars] = useState(mockCarData); // Use mock data for cars for now
+  const [loading, setLoading] = useState(true);
   const { t } = useI18n();
 
-  React.useEffect(() => {
-    const fetchData = async () => {
-      if (!destination || !destination.id) {
+  useEffect(() => {
+    const fetchHotelData = async () => {
+      if (!destination || !destination.title) {
         setLoading(false);
         return;
       }
       try {
-        // Fetch Hotels from Booking.com API
-        const apiHotels = await fetchHotels(destination.title);
-        setHotels(apiHotels);
+        // 1. Attempt to get Hotels from API
+        const destId = await getDestinationId(destination.title);
+        let apiHotels = [];
 
-        // Fallback to Firebase mock data if API fails or returns empty
+        if (destId) {
+          apiHotels = await getHotelsByDestination(destId);
+        } else {
+          console.warn(`Could not find destination ID for ${destination.title}. Falling back to mock data.`);
+        }
+
+        // 2. Fallback to Firebase mock data if API fails or returns empty
         if (apiHotels.length === 0) {
           const hotelsQuery = query(collection(db, 'hotels'), where('destinationId', '==', destination.id));
           const hotelsSnapshot = await getDocs(hotelsQuery);
           const hotelsData = hotelsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           setHotels(hotelsData);
+        } else {
+          setHotels(apiHotels);
         }
 
-        // Fetch Cars (assuming cars are general and not destination-specific for simplicity)
-        const carsQuery = query(collection(db, 'cars'));
-        const carsSnapshot = await getDocs(carsQuery);
-        const carsData = carsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setCars(carsData);
-
       } catch (error) {
-        console.error("Error fetching hotel/car data:", error);
+        console.error("Error fetching hotel data:", error);
+        // Ensure loading is set to false even on error
+        setLoading(false);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    fetchHotelData();
   }, [destination]);
 
   const handleHotelSelect = (hotel) => {
@@ -57,58 +61,61 @@ export default function DetailsScreen({ route, navigation }) {
     navigation.navigate('Booking', { type: 'Car', item: car, destination: destination });
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF6B6B" />
-        <Text style={styles.loadingText}>Loading details...</Text>
-      </View>
-    );
-  }
-
   if (!destination) return <SafeAreaView><Text>No data</Text></SafeAreaView>;
 
   return (
     <SafeAreaView style={{ flex:1, backgroundColor:'#fff' }}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Image source={{ uri: destination.image }} style={styles.image} />
+        {/* Destination Header */}
+        <Image source={destination.image} style={styles.image} />
         <Text style={styles.title}>{destination.title}</Text>
         <Text style={styles.country}>{t('country')}: {destination.country}</Text>
-        <Text style={styles.price}>{t('price')}: ${destination.price}</Text>
-        <Text style={styles.rating}>{t('rating')}: {destination.rating}</Text>
+        <Text style={styles.price}>Avg. Price: ${destination.price}</Text>
+        <Text style={styles.rating}>Rating: {destination.rating}</Text>
         <Text style={styles.descLabel}>{t('description')}</Text>
         <Text style={styles.desc}>{destination.description}</Text>
 
         {/* HOTEL SECTION */}
         <Text style={styles.sectionTitle}>Hotels in {destination.title}</Text>
-        {hotels.length > 0 ? (
-          hotels.map((hotel, index) => (
-            <View key={index} style={styles.card}>
-              <Image source={{ uri: hotel.imageUrl }} style={styles.hotelImage} />
-              <View style={styles.cardContent}>
-                <Text style={styles.hotelName}>{hotel.name}</Text>
-	                <Text style={styles.hotelPrice}>${hotel.price ? hotel.price.toFixed(2) : 'N/A'} / night</Text>
-                <View style={styles.ratingContainer}>
-                  <MaterialCommunityIcons name="star" size={16} color="#f39c12" />
-                  <Text style={styles.hotelRating}>{hotel.rating}</Text>
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color="#FF6B6B" />
+            <Text style={styles.loadingText}>Searching for the best hotels...</Text>
+          </View>
+        ) : hotels.length > 0 ? (
+          <>
+            {/* Hotel Map */}
+            <HotelMap hotels={hotels} destination={destination} />
+
+            {/* Hotel List */}
+            {hotels.map((hotel, index) => (
+              <View key={hotel.id || index} style={styles.card}>
+                <Image source={{ uri: hotel.image || 'https://via.placeholder.com/150' }} style={styles.hotelImage} />
+                <View style={styles.cardContent}>
+                  <Text style={styles.hotelName}>{hotel.name}</Text>
+                  <Text style={styles.hotelPrice}>${Math.round(hotel.price)} {hotel.currency || 'USD'} / night</Text>
+                  <View style={styles.ratingContainer}>
+                    <MaterialCommunityIcons name="star" size={16} color="#f39c12" />
+                    <Text style={styles.hotelRating}>{hotel.rating} ({hotel.reviewCount || '0'} reviews)</Text>
+                  </View>
+                  <Text style={styles.hotelFeatures}>{hotel.features ? hotel.features.slice(0, 3).join(' • ') : 'No features listed'}</Text>
+                  <TouchableOpacity style={styles.selectButton} onPress={() => handleHotelSelect(hotel)}>
+                    <Text style={styles.selectButtonText}>Select Hotel</Text>
+                  </TouchableOpacity>
                 </View>
-	              <Text style={styles.hotelFeatures}>{hotel.address || 'Address not available'}</Text>
-                <TouchableOpacity style={styles.selectButton} onPress={() => handleHotelSelect(hotel)}>
-                  <Text style={styles.selectButtonText}>Select Hotel</Text>
-                </TouchableOpacity>
               </View>
-            </View>
-          ))
+            ))}
+          </>
         ) : (
           <Text style={styles.noDataText}>No hotels found for this destination.</Text>
         )}
 
-        {/* CAR RENTAL SECTION */}
+        {/* CAR RENTAL SECTION (Using mock data for now) */}
         <Text style={styles.sectionTitle}>Car Rentals</Text>
         {cars.length > 0 ? (
           cars.map((car, index) => (
             <View key={index} style={styles.card}>
-              <Image source={{ uri: car.imageUrl }} style={styles.carImage} />
+              <Image source={car.image} style={styles.carImage} />
               <View style={styles.cardContent}>
                 <Text style={styles.carModel}>{car.model}</Text>
                 <Text style={styles.carPrice}>${car.dailyRateUSD} / day</Text>
@@ -236,5 +243,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#999',
     marginTop: 10,
-  }
+  },
+  center: { 
+    alignItems: 'center', 
+    paddingVertical: 40 
+  },
 });

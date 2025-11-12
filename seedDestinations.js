@@ -1,29 +1,28 @@
-
 // seedDestinations.js
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
+// This file now serves as a local data source for destinations.
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDUpwYlEHw52s8Vimnq2nFwxJVSL3fjwL0",
-  authDomain: "global-explorer-travel-app.firebaseapp.com",
-  projectId: "global-explorer-travel-app",
-  storageBucket: "global-explorer-travel-app.firebasestorage.app",
-  messagingSenderId: "846729989547",
-  appId: "1:846729989547:web:f840cf98b3e4a52bd816ee",
-  measurementId: "G-SYV71X3TZZ"
+// Import local images
+const images = {
+  bali: require('./assets/real_images/bali.jpg'),
+  paris: require('./assets/real_images/paris.jpg'),
+  tokyo: require('./assets/real_images/tokyo.jpg'),
+  venice: require('./assets/real_images/venice.jpg'),
+  newyork: require('./assets/real_images/newyork.jpg'),
+  dubai: require('./assets/real_images/dubai.jpg'),
+  hawaii: require('./assets/real_images/hawaii.jpg'),
+  seoul: require('./assets/real_images/seoul.jpg'),
+  phuket: require('./assets/real_images/phuket.jpg'),
+  cappadocia: require('./assets/real_images/cappadocia.jpg'),
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const destinations = [
+export const destinations = [
   {
     title: "Bali",
     country: "Indonesia",
     description: "Experience the spiritual calm and tropical beauty of Bali.",
     price: 3500,
     rating: 5,
-    image: "https://picsum.photos/seed/bali/800/600",
+    image: images.bali,
     coordinates: { lat: -8.4095, lng: 115.1889 },
   },
   {
@@ -32,7 +31,7 @@ const destinations = [
     description: "The city of love, art, and the Eiffel Tower.",
     price: 5000,
     rating: 5,
-    image: "https://picsum.photos/seed/paris/800/600",
+    image: images.paris,
     coordinates: { lat: 48.8566, lng: 2.3522 },
   },
   {
@@ -41,7 +40,7 @@ const destinations = [
     description: "Where technology meets tradition — explore the vibrant Tokyo.",
     price: 4800,
     rating: 4.8,
-    image: "https://picsum.photos/seed/tokyo/800/600",
+    image: images.tokyo,
     coordinates: { lat: 35.6762, lng: 139.6503 },
   },
   {
@@ -50,7 +49,7 @@ const destinations = [
     description: "Sail through romantic canals and experience classic Italian beauty.",
     price: 4200,
     rating: 4.7,
-    image: "https://picsum.photos/seed/venice/800/600",
+    image: images.venice,
     coordinates: { lat: 45.4408, lng: 12.3155 },
   },
   {
@@ -59,7 +58,7 @@ const destinations = [
     description: "The city that never sleeps — skyscrapers, art, and endless energy.",
     price: 5500,
     rating: 5,
-    image: "https://picsum.photos/seed/newyork/800/600",
+    image: images.newyork,
     coordinates: { lat: 40.7128, lng: -74.006 },
   },
   {
@@ -68,7 +67,7 @@ const destinations = [
     description: "Luxury shopping, modern architecture, and desert adventures.",
     price: 4900,
     rating: 4.9,
-    image: "https://picsum.photos/seed/dubai/800/600",
+    image: images.dubai,
     coordinates: { lat: 25.2048, lng: 55.2708 },
   },
   {
@@ -77,7 +76,7 @@ const destinations = [
     description: "Tropical paradise with volcanoes, beaches, and breathtaking views.",
     price: 4600,
     rating: 4.8,
-    image: "https://picsum.photos/seed/hawaii/800/600",
+    image: images.hawaii,
     coordinates: { lat: 19.8968, lng: -155.5828 },
   },
   {
@@ -86,7 +85,7 @@ const destinations = [
     description: "A perfect mix of culture, food, and K-pop energy.",
     price: 4000,
     rating: 4.7,
-    image: "https://picsum.photos/seed/seoul/800/600",
+    image: images.seoul,
     coordinates: { lat: 37.5665, lng: 126.978 },
   },
   {
@@ -95,7 +94,7 @@ const destinations = [
     description: "Sun, sea, and smiles — explore Thailand’s most beautiful island.",
     price: 3800,
     rating: 4.8,
-    image: "https://picsum.photos/seed/phuket/800/600",
+    image: images.phuket,
     coordinates: { lat: 7.8804, lng: 98.3923 },
   },
   {
@@ -104,21 +103,53 @@ const destinations = [
     description: "Hot air balloons and fairy chimneys in a surreal landscape.",
     price: 3900,
     rating: 4.9,
-    image: "https://picsum.photos/seed/cappadocia/800/600",
+    image: images.cappadocia,
     coordinates: { lat: 38.6431, lng: 34.8263 },
   },
 ];
 
-async function seedData() {
-  for (const d of destinations) {
-    try {
-      await addDoc(collection(db, "destinations"), d);
-      console.log("✅ Added:", d.title);
-    } catch (e) {
-      console.error("❌ Error adding", d.title, e);
-    }
-  }
-  console.log("🎉 All destinations added successfully!");
-}
 
-seedData();
+// Mock data for car rentals
+const carImages = {
+    suv: require('./assets/real_images/car_suv.jpg'),
+    sedan: require('./assets/real_images/car_sedan.png'),
+    luxury: require('./assets/real_images/car_luxury.jpg'),
+};
+
+export const mockCarData = [
+    {
+        id: 'car1',
+        model: 'Toyota RAV4 (SUV)',
+        dailyRateUSD: 55,
+        image: carImages.suv,
+        features: ['Automatic', 'A/C', '4 Passengers', 'Large Luggage'],
+    },
+    {
+        id: 'car2',
+        model: 'Honda Civic (Sedan)',
+        dailyRateUSD: 40,
+        image: carImages.sedan,
+        features: ['Automatic', 'A/C', '5 Passengers', 'Medium Luggage'],
+    },
+    {
+        id: 'car3',
+        model: 'Mercedes-Benz S-Class (Luxury)',
+        dailyRateUSD: 180,
+        image: carImages.luxury,
+        features: ['Automatic', 'Premium Audio', 'Leather Seats', 'GPS'],
+    },
+    {
+        id: 'car4',
+        model: 'Nissan Versa (Economy)',
+        dailyRateUSD: 30,
+        image: carImages.sedan, // Reusing sedan image for economy
+        features: ['Manual', 'A/C', '4 Passengers', 'Small Luggage'],
+    },
+    {
+        id: 'car5',
+        model: 'Ford Explorer (Large SUV)',
+        dailyRateUSD: 70,
+        image: carImages.suv,
+        features: ['Automatic', 'A/C', '7 Passengers', 'Large Luggage'],
+    },
+];
